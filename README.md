@@ -82,9 +82,15 @@ drwxr-xr-x  7 vagrant  vagrant  512 Aug 29 22:29 boombox
 CMD:  [ls -l]
 ```
 
-## With Vagrant
+## Defaults To Vagrant
 
-Omnitool's default values assume you want to use Vagrant.
+Omnitool's default values assume you want to use Vagrant. This is done by using Vagrant's auth details as the default values for omnitool
+
+| Flag   | Default value                         |
+| ------ | ------------------------------------- |
+| `-u`   | vagrant                               |
+| `-k`   | $HOME/.vagrant.d/insecure_private_key |
+| `-g`   | vagrants                              |
 
 ## Not With Vagrant
 
