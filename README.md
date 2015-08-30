@@ -35,12 +35,12 @@ COMMANDS:
    help, h	Shows a list of commands or help for one command
    
 GLOBAL OPTIONS:
-   --list, -l "machines.list"						Path to machine list file [$OMNI_MACHINE_LIST]
-   --username, -u "vagrant"						Username for machine group [$OMNI_USERNAME]
+   --list, -l "machines.list"                                       Path to machine list file [$OMNI_MACHINE_LIST]
+   --username, -u "vagrant"						                    Username for machine group [$OMNI_USERNAME]
    --keyfile, -k "/Users/jmsdnns/.vagrant.d/insecure_private_key"	Path to auth key [$OMNI_KEYFILE]
-   --group, -g "vagrants"						Machine group to perform task on [$OMNI_MACHINE_GROUP]
-   --help, -h								show help
-   --version, -v							print the version
+   --group, -g "vagrants"                                           Machine group to perform task on [$OMNI_MACHINE_GROUP]
+   --help, -h                                                       show help
+   --version, -v							                        print the version
 ```
 
 The help is generated from [Jeremy Saenz's `cli`](https://github.com/codegangsta/) library, which omnitool uses to parse command line input.
