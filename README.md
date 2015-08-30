@@ -10,7 +10,6 @@ First, install it.
 
 ```
 $ go get github.com/jmsdnns/omnitool
-$ go get github.com/codegangsta/cli
 $ go install github.com/jmsdnns/omnitool
 ```
 
