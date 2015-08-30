@@ -1,49 +1,101 @@
 # Omnitool
 
-The idea is simple. Using SSH, you can tell one or more machines to do something. Either tell the pool of machines to run some command or copy a script to the machines to execute in parallel.
+Omnitool is a tool for using SSH on multiple machines in parallel.
 
-Omnitool's purpose is to make managing N machines as easy as we manage 1. It follows the [ZOI rule](https://en.wikipedia.org/wiki/Zero_one_infinity_rule) and provides layers above ZOI for the context of managing networked computers.
+Omnitool's goal is to make managing networks of computers easier. Think in terms of one machine while working on N machines.
 
-It currently builds machines on [Digital Ocean](https://www.digitalocean.com/) using [Boombox](https://github.com/jmsdnns/boombox).
+## Using It
 
-Omnitool believes it is easier to throw machines away than to upgrade them. To build a network of machines is to 1) ask Digital Ocean for N machines, 2) SSH to each in parallel to configure them, 3) provide an easy mechanism for performing commands on all live machines, and 4) terminate them at will.
-
-In a somewhat accurate, single sentence: _Omnitool is a tool for managing networks via SSH pools_.
-
-## Installing
-
-Omnitool requires a working Go environment. [Here are the docs](https://golang.org/doc/install) for installing Go, in case you need them.
+First, install it.
 
 ```
-$ go get https://github.com/jmsdnns/omnitool
+$ go get github.com/jmsdnns/omnitool
+$ go get github.com/codegangsta/cli
+$ go install github.com/jmsdnns/omnitool
 ```
 
-## Using Omnitool
+Omnitool has help built-in and is explicit about what default values are used.
 
-Here is an example where 5 machines are created for a load test using [siege](https://www.joedog.org/siege-home/). Omnitool runs the siege command on all five machines in parallel
-
-```
-$ omnitool create machines 5 -g 'microarmy'
-$ omnitool install siege -g 'microarmy'
-$ omnitool run -c 'siege -c 100 -t 60s http://jmsdnns.com/' -g 'microarmy'
-$ omnitool terminate microarmy
-```
-
-Here is an example setting up 5 machines to run a go service.
+Each command line argument can be supplied as an environment variable if you prefer. The variable is listed after the text describing what each argument does
 
 ```
-$ omnitool create machines 10 -g 'api servers'
-$ omnitool install go myserver
+$ omnitool -h
+NAME:
+   omnitool - Simple SSH pools, backed by machine lists
+
+USAGE:
+   omnitool [global options] command [command options] [arguments...]
+   
+VERSION:
+   0.1
+   
+COMMANDS:
+   run		Runs command on machine group
+   scp		Copies file to machine group
+   help, h	Shows a list of commands or help for one command
+   
+GLOBAL OPTIONS:
+   --list, -l "machines.list"						Path to machine list file [$OMNI_MACHINE_LIST]
+   --username, -u "vagrant"						Username for machine group [$OMNI_USERNAME]
+   --keyfile, -k "/Users/jmsdnns/.vagrant.d/insecure_private_key"	Path to auth key [$OMNI_KEYFILE]
+   --group, -g "vagrants"						Machine group to perform task on [$OMNI_MACHINE_GROUP]
+   --help, -h								show help
+   --version, -v							print the version
 ```
 
-You're probably wondering, "how do I write that _myserver_ part?"
+The help is generated from [Jeremy Saenz's `cli`](https://github.com/codegangsta/) library, which omnitool uses to parse command line input.
 
-## Extending Omnitool
+## It's Early
 
-To extend Omnitool is to change the tracks you use with [Boombox](https://github.com/jmsdnns/boombox).
+The tool is new and the ideas are early. Some steps are manual. You have to create the machine list by hand, for example.
 
-Fork boombox, add the tracks you want, and tell omnitool about the new path.
+## Machine Lists
+
+I use [Boombox](https://github.com/jmsdnns/boombox) to instantiate multiple FreeBSD VM's, and then I put their IP's in a file called `machines.list`.
+
+_This list will eventually be generated_
+
+A machine list looks like this:
 
 ```
-$ omnitool set boomboxrepo https://github.com/fionaapple/boombox
+[vagrants]
+127.0.0.1:2222
+127.0.0.1:2200
 ```
+
+Once that's in place, you can use Omnitool to run commands on machine groups in parallel by supplying the group name with the `-g` argument.
+
+```
+$ omnitool -g vagrants run "ls -l"
+Hostname: 127.0.0.1:2222
+Result:
+total 8
+-rw-r--r--  1 vagrant  vagrant    0 Aug 29 22:28 bbx1
+drwxr-xr-x  7 vagrant  vagrant  512 Aug 29 22:29 boombox
+
+Hostname: 127.0.0.1:2200
+Result:
+total 8
+-rw-r--r--  1 vagrant  vagrant    0 Aug 29 22:28 bbx2
+drwxr-xr-x  7 vagrant  vagrant  512 Aug 29 22:29 boombox
+
+CMD:  [ls -l]
+```
+
+## With Vagrant
+
+Omnitool's default values assume you want to use Vagrant.
+
+## Not With Vagrant
+
+To override the authentication details, pass the `-u` flag and supply a username and pass a `-k` flag and supply the path to your SSH key.
+
+```
+$ omnitool -u jmsdnns -k ~/.ssh/id_rsa -g apiservers run "ls"
+```
+
+## Next Up
+
+* SFTP
+* Machine list generation
+* Provisioning
