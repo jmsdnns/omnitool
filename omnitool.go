@@ -29,12 +29,12 @@ func cmdRun(c *cli.Context) {
 	// Load machine list file
 	mf, err := LoadFile(ml)
 	if err != nil {
-		fmt.Println("ERROR: Couldn't find %s", ml)
+		fmt.Printf("ERROR: Couldn't find %s", ml)
 		return
 	}
 
 	// Lost machine addresses by group name
-	machine_list := mf.Get(mg)
+	machineList := mf.Get(mg)
 
 	// Receive responses on this channel
 	results := make(chan SSHResponse)
@@ -43,10 +43,10 @@ func cmdRun(c *cli.Context) {
 	timeout := time.After(60 * time.Second)
 
 	// Spawn the gorountines
-	MapCmd(machine_list, u, k, cmd, results)
+	MapCmd(machineList, u, k, cmd, results)
 
 	// See how they did
-	for i := 0; i < len(machine_list); i++ {
+	for i := 0; i < len(machineList); i++ {
 		select {
 		case r := <-results:
 			fmt.Printf("Hostname: %s\n", r.Hostname)
@@ -76,12 +76,12 @@ func cmdScp(c *cli.Context) {
 	// Load machine list file
 	mf, err := LoadFile(ml)
 	if err != nil {
-		fmt.Println("ERROR: Couldn't find %s", ml)
+		fmt.Printf("ERROR: Couldn't find %s", ml)
 		return
 	}
 
 	// Lost machine addresses by group name
-	machine_list := mf.Get(mg)
+	machineList := mf.Get(mg)
 
 	// Receive responses on this channel
 	results := make(chan SSHResponse)
@@ -90,10 +90,10 @@ func cmdScp(c *cli.Context) {
 	timeout := time.After(60 * time.Second)
 
 	// Spawn the gorountines
-	MapScp(machine_list, u, k, localPath, remotePath, results)
+	MapScp(machineList, u, k, localPath, remotePath, results)
 
 	// See how they did
-	for i := 0; i < len(machine_list); i++ {
+	for i := 0; i < len(machineList); i++ {
 		select {
 		case r := <-results:
 			fmt.Printf("Hostname: %s\n", r.Hostname)
@@ -134,7 +134,7 @@ func main() {
 
 		cli.StringFlag{
 			Name:   "keyfile, k",
-			Value:  os.Getenv("HOME") + "/.vagrant.d/insecure_private_key",
+			Value:  os.Getenv("HOME") + "/.ssh/id_rsa.pub",
 			Usage:  "Path to auth key",
 			EnvVar: "OMNI_KEYFILE",
 		},
