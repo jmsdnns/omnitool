@@ -1,19 +1,19 @@
 # Omnitool
 
-Omnitool is a tool for using SSH on multiple machines in parallel.
+Omnitool is a tool for using SSH on multiple machines in parallel. It is particularly useful for things where you need a bunch of machines for a short period of time and thus don't want to build something more robust with a tool like [Ansible](https://ansible.com/) or [Puppet](https://puppetlabs.com/).
 
-Omnitool's goal is to make managing networks of computers easier. Think in terms of one machine while working on N machines.
+Omnitool's goal is to let you think in terms of one machine while working with N machines.
 
-## Using It
-
-First, install it.
+## Installing
 
 ```
 $ go get github.com/jmsdnns/omnitool
 $ go install github.com/jmsdnns/omnitool
 ```
 
-Omnitool has help built-in and is explicit about what default values are used.
+## Using It
+
+Omnitool has help built-in.
 
 Each command line argument can be supplied as an environment variable if you prefer. The variable is listed after the text describing what each argument does
 
@@ -24,35 +24,25 @@ NAME:
 
 USAGE:
    omnitool [global options] command [command options] [arguments...]
-   
+
 VERSION:
    0.1
-   
+
 COMMANDS:
    run		Runs command on machine group
    scp		Copies file to machine group
    help, h	Shows a list of commands or help for one command
-   
+
 GLOBAL OPTIONS:
-   --list, -l "machines.list"                                       Path to machine list file [$OMNI_MACHINE_LIST]
-   --username, -u "vagrant"						                    Username for machine group [$OMNI_USERNAME]
-   --keyfile, -k "/Users/jmsdnns/.vagrant.d/insecure_private_key"	Path to auth key [$OMNI_KEYFILE]
-   --group, -g "vagrants"                                           Machine group to perform task on [$OMNI_MACHINE_GROUP]
-   --help, -h                                                       show help
-   --version, -v							                        print the version
+   --list, -l 		Path to machine list file [$OMNI_MACHINE_LIST]
+   --username, -u 	Username for machine group [$OMNI_USERNAME]
+   --keyfile, -k 	Path to auth key [$OMNI_KEYFILE]
+   --group, -g 		Machine group to perform task on [$OMNI_MACHINE_GROUP]
+   --help, -h		show help
+   --version, -v	print the version
 ```
 
-The help is generated from [Jeremy Saenz's `cli`](https://github.com/codegangsta/) library, which omnitool uses to parse command line input.
-
-## It's Early
-
-The tool is new and the ideas are early. Some steps are manual. You have to create the machine list by hand, for example.
-
 ## Machine Lists
-
-I use [Boombox](https://github.com/jmsdnns/boombox) to instantiate multiple FreeBSD VM's, and then I put their IP's in a file called `machines.list`.
-
-_This list will eventually be generated_
 
 A machine list looks like this:
 
@@ -62,7 +52,7 @@ A machine list looks like this:
 127.0.0.1:2200
 ```
 
-Once that's in place, you can use Omnitool to run commands on machine groups in parallel by supplying the group name with the `-g` argument.
+You have to make it by hand for now, but once that's in place, you can use Omnitool to run commands on machine groups in parallel by supplying the group name with the `-g` argument.
 
 ```
 $ omnitool -g vagrants run "ls -l"
@@ -81,26 +71,12 @@ drwxr-xr-x  7 vagrant  vagrant  512 Aug 29 22:29 boombox
 CMD:  [ls -l]
 ```
 
-## Defaults To Vagrant
+## Using with Vagrant
 
-Omnitool's default values assume you want to use Vagrant. This is done by using Vagrant's auth details as the default values for omnitool
+It's easy to use omnitool with Vagrant. Create a machine list called `vagrants` and then use the following command line arguments.
 
 | Flag   | Default value                         |
 | ------ | ------------------------------------- |
 | `-u`   | vagrant                               |
 | `-k`   | $HOME/.vagrant.d/insecure_private_key |
 | `-g`   | vagrants                              |
-
-## Not With Vagrant
-
-To override the authentication details, pass the `-u` flag and supply a username and pass a `-k` flag and supply the path to your SSH key.
-
-```
-$ omnitool -u jmsdnns -k ~/.ssh/id_rsa -g apiservers run "ls"
-```
-
-## Next Up
-
-* SFTP
-* Machine list generation
-* Provisioning
