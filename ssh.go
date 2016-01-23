@@ -53,10 +53,8 @@ func dialServer(hostname string, config *ssh.ClientConfig) (*ssh.Client, error) 
 	return conn, nil
 }
 
-//
-// SSH Sessions
-//
-
+// SSHSession is a container for the pieces necessary to hold an SSH connection
+// open in a goroutine
 type SSHSession struct {
 	hostname string
 	config   *ssh.ClientConfig
@@ -108,20 +106,19 @@ func (s *SSHSession) executeCmd(cmd string) string {
 	return stdoutBuf.String()
 }
 
+// GetSFTPClient returns an SFTP client from an existing SSHSession
 func (s *SSHSession) GetSFTPClient() (*sftp.Client, error) {
 	return sftp.NewClient(s.conn)
 }
 
-//
-// Connection Pooling
-//
-
+// SSHResponse contains the restul of running a command on a host via SSH
 type SSHResponse struct {
 	Hostname string
 	Result   string
 	Err      error
 }
 
+// ConnectToMachine takes host details and returns a connected SSHSession
 func ConnectToMachine(address string, username string, keypath string) (*SSHSession, error) {
 	session := &SSHSession{}
 	err := session.init(address, username, keypath)
@@ -132,6 +129,8 @@ func ConnectToMachine(address string, username string, keypath string) (*SSHSess
 	return session, nil
 }
 
+// MapCmd takes the details for a command and maps it, via SSH, across a list
+// of hosts
 func MapCmd(hostnames HostGroup, username string, keypath string, command string, results chan SSHResponse) {
 	for _, hostname := range hostnames {
 		go func(hostname string) {
@@ -153,6 +152,8 @@ func MapCmd(hostnames HostGroup, username string, keypath string, command string
 	}
 }
 
+// MapScp takes the details for a file transfer and maps the file transfer
+// across a list of hosts
 func MapScp(hostnames HostGroup, username string, keypath string, localPath string, remotePath string, results chan SSHResponse) {
 	for _, hostname := range hostnames {
 		go func(hostname string) {
@@ -191,5 +192,4 @@ func MapScp(hostnames HostGroup, username string, keypath string, localPath stri
 			results <- response
 		}(hostname)
 	}
-
 }

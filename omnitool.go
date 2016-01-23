@@ -10,7 +10,10 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-// ParseCommonFlags does the work for setting up the common environment
+// ParseCommonFlags parses "username", "keyfile", "list", and "group" arguments.
+// They are considered common as the main command, `omnitool`, parses them and
+// every subcommand can too, allowing them to be placed anywhere on the command
+// line
 func ParseCommonFlags(c *cli.Context) (*string, *string, *HostGroup, *error) {
 	u := c.GlobalString("username")
 	k := c.GlobalString("keyfile")
@@ -31,9 +34,9 @@ func ParseCommonFlags(c *cli.Context) (*string, *string, *HostGroup, *error) {
 	return &u, &k, &machineList, nil
 }
 
-// GenerateFlags takes a list of flags and appends them to the flags that are
-// common to all commands, for a complete list
-func GenerateFlags(subFlags []cli.Flag) []cli.Flag {
+// GenerateCommonFlags takes a list of flags and appends them to the flags that
+// are common to all commands, for a complete list
+func GenerateCommonFlags(subFlags []cli.Flag) []cli.Flag {
 	flags := []cli.Flag{
 		cli.StringFlag{
 			Name:   "list, l",
@@ -141,7 +144,7 @@ func main() {
 	app.Name = "omnitool"
 	app.Usage = "Simple SSH pools, backed by machine lists"
 	app.Version = "0.1"
-	app.Flags = GenerateFlags([]cli.Flag{})
+	app.Flags = GenerateCommonFlags([]cli.Flag{})
 
 	// Subcommands
 	app.Commands = []cli.Command{
@@ -149,13 +152,13 @@ func main() {
 			Name:   "run",
 			Usage:  "Runs command on machine group",
 			Action: cmdRun,
-			Flags:  GenerateFlags([]cli.Flag{}),
+			Flags:  GenerateCommonFlags([]cli.Flag{}),
 		},
 		{
 			Name:   "scp",
 			Usage:  "Copies file to machine group",
 			Action: cmdScp,
-			Flags:  GenerateFlags([]cli.Flag{}),
+			Flags:  GenerateCommonFlags([]cli.Flag{}),
 		},
 	}
 

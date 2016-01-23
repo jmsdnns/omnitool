@@ -15,25 +15,6 @@ package main
 //     [dbservers]
 //     10.0.0.5
 //     10.0.0.6
-//
-// The file's syntax is close to ini but not quite. I think of it as an ini file
-// for machines or .mini files.
-//
-// Example use:
-//
-//	f, _ := LoadFile("test.mini")
-//
-//	for groupName, group := range f {
-//		fmt.Println("Group: ", groupName)
-//		for _, hostname := range group {
-//			fmt.Println("  - ", hostname)
-//		}
-//	}
-//
-//	g := f.Get("dbservers")
-//	fmt.Println("Group: ", g)
-//
-// This code was adapted from: https://github.com/vaughan0/go-ini
 
 import (
 	"bufio"
@@ -43,16 +24,13 @@ import (
 	"strings"
 )
 
-//
-// Machine Groups
-//
-
-// group name => group
+// File is a map of group name => group
 type File map[string]HostGroup
 
-// group == list of hosts
+// HostGroup is a list of hosts
 type HostGroup []string
 
+// Get takes a group name and returns a HostGroup
 func (f File) Get(groupName string) HostGroup {
 	group := f[groupName]
 	if group == nil {
@@ -63,10 +41,12 @@ func (f File) Get(groupName string) HostGroup {
 	return group
 }
 
+// Set associates a HostGroup with a group name
 func (f File) Set(groupName string, group HostGroup) {
 	f[groupName] = group
 }
 
+// Load parses an io.Reader and populates itself
 func (f File) Load(in io.Reader) (err error) {
 	bufin, ok := in.(*bufio.Reader)
 	if !ok {
@@ -76,6 +56,7 @@ func (f File) Load(in io.Reader) (err error) {
 	return parseFile(bufin, f)
 }
 
+// LoadFile opens a file by name and passes io.Reader to File.Load
 func (f File) LoadFile(file string) (err error) {
 	in, err := os.Open(file)
 	if err != nil {
@@ -90,12 +71,14 @@ func (f File) LoadFile(file string) (err error) {
 // Config Parsing
 //
 
+// Load parses an io.Reader into a File instance
 func Load(in io.Reader) (File, error) {
 	file := make(File)
 	err := file.Load(in)
 	return file, err
 }
 
+// LoadFile reads a file into a File instance
 func LoadFile(filename string) (File, error) {
 	file := make(File)
 	err := file.LoadFile(filename)
