@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -9,9 +10,67 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-//
-// Commands
-//
+// ParseCommonFlags does the work for setting up the common environment
+func ParseCommonFlags(c *cli.Context) (*string, *string, *HostGroup, *error) {
+	u := c.GlobalString("username")
+	k := c.GlobalString("keyfile")
+
+	// Parse groups into list
+	ml := c.GlobalString("list")
+	mg := c.GlobalString("group")
+
+	// Load machine list file
+	mf, err := LoadFile(ml)
+	if err != nil {
+		return nil, nil, nil, &err
+	}
+
+	// Lost machine addresses by group name
+	machineList := mf.Get(mg)
+
+	return &u, &k, &machineList, nil
+}
+
+// GenerateFlags takes a list of flags and appends them to the flags that are
+// common to all commands, for a complete list
+func GenerateFlags(subFlags []cli.Flag) []cli.Flag {
+	flags := []cli.Flag{
+		cli.StringFlag{
+			Name:   "list, l",
+			Value:  "machines.list",
+			Usage:  "Path to machine list file",
+			EnvVar: "OMNI_MACHINE_LIST",
+		},
+
+		cli.StringFlag{
+			Name:   "username, u",
+			Value:  os.Getenv("USER"),
+			Usage:  "Username for machine group",
+			EnvVar: "OMNI_USERNAME",
+		},
+
+		cli.StringFlag{
+			Name:   "keyfile, k",
+			Value:  os.Getenv("HOME") + "/.ssh/id_rsa.pub",
+			Usage:  "Path to auth key",
+			EnvVar: "OMNI_KEYFILE",
+		},
+
+		cli.StringFlag{
+			Name:   "group, g",
+			Value:  "vagrants",
+			Usage:  "Machine group to perform task on",
+			EnvVar: "OMNI_MACHINE_GROUP",
+		},
+	}
+
+	for i := 0; i < len(subFlags); i++ {
+		flag := subFlags[i]
+		flags = append(flags, flag)
+	}
+
+	return flags
+}
 
 func cmdRun(c *cli.Context) {
 	if len(c.Args()) != 1 {
@@ -21,32 +80,17 @@ func cmdRun(c *cli.Context) {
 
 	cmd := strings.Join(c.Args(), " ")
 
-	u := c.GlobalString("username")
-	k := c.GlobalString("keyfile")
-	ml := c.GlobalString("list")
-	mg := c.GlobalString("group")
-
-	// Load machine list file
-	mf, err := LoadFile(ml)
+	username, key, machineList, err := ParseCommonFlags(c)
 	if err != nil {
-		fmt.Printf("ERROR: Couldn't find %s", ml)
+		log.Fatal(err)
 		return
 	}
 
-	// Lost machine addresses by group name
-	machineList := mf.Get(mg)
-
-	// Receive responses on this channel
 	results := make(chan SSHResponse)
-
-	// Timeout after N seconds
 	timeout := time.After(60 * time.Second)
+	MapCmd(*machineList, *username, *key, cmd, results)
 
-	// Spawn the gorountines
-	MapCmd(machineList, u, k, cmd, results)
-
-	// See how they did
-	for i := 0; i < len(machineList); i++ {
+	for i := 0; i < len(*machineList); i++ {
 		select {
 		case r := <-results:
 			fmt.Printf("Hostname: %s\n", r.Hostname)
@@ -68,32 +112,17 @@ func cmdScp(c *cli.Context) {
 	localPath := c.Args()[0]
 	remotePath := c.Args()[1]
 
-	u := c.GlobalString("username")
-	k := c.GlobalString("keyfile")
-	ml := c.GlobalString("list")
-	mg := c.GlobalString("group")
-
-	// Load machine list file
-	mf, err := LoadFile(ml)
+	username, key, machineList, err := ParseCommonFlags(c)
 	if err != nil {
-		fmt.Printf("ERROR: Couldn't find %s", ml)
+		log.Fatal(err)
 		return
 	}
 
-	// Lost machine addresses by group name
-	machineList := mf.Get(mg)
-
-	// Receive responses on this channel
 	results := make(chan SSHResponse)
-
-	// Timeout after N seconds
 	timeout := time.After(60 * time.Second)
+	MapScp(*machineList, *username, *key, localPath, remotePath, results)
 
-	// Spawn the gorountines
-	MapScp(machineList, u, k, localPath, remotePath, results)
-
-	// See how they did
-	for i := 0; i < len(machineList); i++ {
+	for i := 0; i < len(*machineList); i++ {
 		select {
 		case r := <-results:
 			fmt.Printf("Hostname: %s\n", r.Hostname)
@@ -108,65 +137,28 @@ func cmdScp(c *cli.Context) {
 
 func main() {
 	// App setup
-
 	app := cli.NewApp()
 	app.Name = "omnitool"
 	app.Usage = "Simple SSH pools, backed by machine lists"
-
 	app.Version = "0.1"
-
-	// Global Flags
-
-	globalFlags := []cli.Flag{
-		cli.StringFlag{
-			Name:   "list, l",
-			Value:  "machines.list",
-			Usage:  "Path to machine list file",
-			EnvVar: "OMNI_MACHINE_LIST",
-		},
-
-		cli.StringFlag{
-			Name:   "username, u",
-			Value:  "vagrant",
-			Usage:  "Username for machine group",
-			EnvVar: "OMNI_USERNAME",
-		},
-
-		cli.StringFlag{
-			Name:   "keyfile, k",
-			Value:  os.Getenv("HOME") + "/.ssh/id_rsa.pub",
-			Usage:  "Path to auth key",
-			EnvVar: "OMNI_KEYFILE",
-		},
-
-		cli.StringFlag{
-			Name:   "group, g",
-			Value:  "vagrants",
-			Usage:  "Machine group to perform task on",
-			EnvVar: "OMNI_MACHINE_GROUP",
-		},
-	}
-
-	app.Flags = globalFlags
+	app.Flags = GenerateFlags([]cli.Flag{})
 
 	// Subcommands
-
 	app.Commands = []cli.Command{
 		{
 			Name:   "run",
 			Usage:  "Runs command on machine group",
 			Action: cmdRun,
-			Flags:  globalFlags,
+			Flags:  GenerateFlags([]cli.Flag{}),
 		},
 		{
 			Name:   "scp",
 			Usage:  "Copies file to machine group",
 			Action: cmdScp,
-			Flags:  globalFlags,
+			Flags:  GenerateFlags([]cli.Flag{}),
 		},
 	}
 
 	// Do it
-
 	app.Run(os.Args)
 }
