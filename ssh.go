@@ -132,7 +132,7 @@ func ConnectToMachine(address string, username string, keypath string) (*SSHSess
 	return session, nil
 }
 
-func MapCmd(hostnames []string, username string, keypath string, command string, results chan SSHResponse) {
+func MapCmd(hostnames HostGroup, username string, keypath string, command string, results chan SSHResponse) {
 	for _, hostname := range hostnames {
 		go func(hostname string) {
 			response := SSHResponse{Hostname: hostname}
@@ -153,7 +153,7 @@ func MapCmd(hostnames []string, username string, keypath string, command string,
 	}
 }
 
-func MapScp(hostnames []string, username string, keypath string, localPath string, remotePath string, results chan SSHResponse) {
+func MapScp(hostnames HostGroup, username string, keypath string, localPath string, remotePath string, results chan SSHResponse) {
 	for _, hostname := range hostnames {
 		go func(hostname string) {
 			response := SSHResponse{Hostname: hostname}
