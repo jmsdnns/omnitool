@@ -40,28 +40,24 @@ func GenerateCommonFlags(subFlags []cli.Flag) []cli.Flag {
 	flags := []cli.Flag{
 		cli.StringFlag{
 			Name:   "list, l",
-			Value:  "machines.list",
 			Usage:  "Path to machine list file",
 			EnvVar: "OMNI_MACHINE_LIST",
 		},
 
 		cli.StringFlag{
 			Name:   "username, u",
-			Value:  os.Getenv("USER"),
 			Usage:  "Username for machine group",
 			EnvVar: "OMNI_USERNAME",
 		},
 
 		cli.StringFlag{
 			Name:   "keyfile, k",
-			Value:  os.Getenv("HOME") + "/.ssh/id_rsa.pub",
 			Usage:  "Path to auth key",
 			EnvVar: "OMNI_KEYFILE",
 		},
 
 		cli.StringFlag{
 			Name:   "group, g",
-			Value:  "vagrants",
 			Usage:  "Machine group to perform task on",
 			EnvVar: "OMNI_MACHINE_GROUP",
 		},
