@@ -1,12 +1,12 @@
 # Omnitool
 
-Omnitool is a tool for using SSH on multiple machines in parallel. It is particularly useful for things where you need a bunch of machines for a short period of time and thus don't want to build something more robust with a tool like [Ansible](https://ansible.com/) or [Puppet](https://puppetlabs.com/).
+Omnitool is a tool for using SSH on multiple machines in parallel. It is particularly useful for times when you need a bunch of machines for a short period of time but don't want to invest the time in building up a more robust management system.
 
 Omnitool's goal is to let you think in terms of one machine while working with N machines.
 
 ## Installing
 
-```
+```shell
 $ go get github.com/jmsdnns/omnitool
 $ go install github.com/jmsdnns/omnitool
 ```
@@ -15,68 +15,73 @@ $ go install github.com/jmsdnns/omnitool
 
 Omnitool has help built-in.
 
-Each command line argument can be supplied as an environment variable if you prefer. The variable is listed after the text describing what each argument does
+```shell
+Usage:
+  omnitool [command]
 
-```
-$ omnitool -h
-NAME:
-   omnitool - Simple SSH pools, backed by machine lists
+Available Commands:
+  copy        Copies file to host group
+  run         Runs a command on host group
 
-USAGE:
-   omnitool [global options] command [command options] [arguments...]
+Flags:
+  -g, --group string       host group for task
+  -h, --help               help for omnitool
+      --hostsfile string   path to hosts file (default "hosts.list")
+  -k, --keyfile string     path to ssh key
+  -u, --username string    username for ssh
 
-VERSION:
-   0.1
-
-COMMANDS:
-   run		Runs command on machine group
-   scp		Copies file to machine group
-   help, h	Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --list, -l 		Path to machine list file [$OMNI_MACHINE_LIST]
-   --username, -u 	Username for machine group [$OMNI_USERNAME]
-   --keyfile, -k 	Path to auth key [$OMNI_KEYFILE]
-   --group, -g 		Machine group to perform task on [$OMNI_MACHINE_GROUP]
-   --help, -h		show help
-   --version, -v	print the version
+Use "omnitool [command] --help" for more information about a command.
 ```
 
-## Machine Lists
+Running a command on a host group looks like this:
 
-A machine list looks like this:
+```shell
+$ ./omnitool -u ... -k ... -g ... run "ls -l"
+CMD: ls -l
+
+Host: 33.33.33.12:22
+Result:
+total 0
+-rw-rw-r-- 1 vagrant vagrant 0 Aug 14 02:53 machine_2
+
+Host: 33.33.33.11:22
+Result:
+total 0
+-rw-rw-r-- 1 vagrant vagrant 0 Aug 14 02:53 machine_1
+```
+
+Copying a file to a host group looks like this:
+
+```shell
+$ ./omnitool -u ... -k ... -g ... copy hosts.list hosts.list
+Host: 33.33.33.12:22
+Result: ok
+
+Host: 33.33.33.11:22
+Result: ok
+```
+
+## Hosts File
+
+A hosts file looks like this:
 
 ```
 [vagrants]
 127.0.0.1:2222
 127.0.0.1:2200
-```
 
-You have to make it by hand for now, but once that's in place, you can use Omnitool to run commands on machine groups in parallel by supplying the group name with the `-g` argument.
-
-```
-$ omnitool -g vagrants run "ls -l"
-Hostname: 127.0.0.1:2222
-Result:
-total 8
--rw-r--r--  1 vagrant  vagrant    0 Aug 29 22:28 bbx1
-drwxr-xr-x  7 vagrant  vagrant  512 Aug 29 22:29 boombox
-
-Hostname: 127.0.0.1:2200
-Result:
-total 8
--rw-r--r--  1 vagrant  vagrant    0 Aug 29 22:28 bbx2
-drwxr-xr-x  7 vagrant  vagrant  512 Aug 29 22:29 boombox
-
-CMD:  [ls -l]
+[jms labs]
+192.168.0.5:22
+192.168.0.6:22
 ```
 
 ## Using with Vagrant
 
-It's easy to use omnitool with Vagrant. Create a machine list called `vagrants` and then use the following command line arguments.
+Using Omnitool with Vagrant is easy, but you will need to tell Vagrant not to automatically generate SSH keys for each host. This lets us use a single key for each host, which more accurately reflects what you'd have in AWS anyway.
+
+_For more info, read about the `config.ssh.insert_key` flag in [Vagrant's SSH documentation](https://www.vagrantup.com/docs/vagrantfile/ssh_settings.html)._
 
 | Flag   | Default value                         |
 | ------ | ------------------------------------- |
 | `-u`   | vagrant                               |
 | `-k`   | $HOME/.vagrant.d/insecure_private_key |
-| `-g`   | vagrants                              |
